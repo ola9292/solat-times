@@ -1,0 +1,279 @@
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1, user-scalable=no" >
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <title>Solat Times</title>
+        <style>
+                body{
+                       
+                        box-sizing: border-box;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        background-color: gray;
+                        font-family: sans-serif;
+                        background-image: url('./images/back.jpg');
+                }
+               .container{
+                        background-image: url('./images/ramadan-3976.gif');
+                        background-repeat: no-repeat;
+                        background-position: top;
+                        position: relative;
+                        width: 300px;
+                        border:1px solid #EC5F5D;
+                        border-radius: 10px;
+                        background-color: white;
+                        padding: 10px;
+
+               }
+               /* .container::after{
+                content: url('./images');
+                position: absolute;
+                top:0;
+                right: 0;
+                width: 50px;
+               } */
+
+               .nav{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+
+               }
+               .nav button{
+                width: 50px; 
+                height: 50px;
+                border-radius: 50%; 
+                border: none;
+                background-color: #0059b3; 
+                color: white; 
+                font-size: 18px; 
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+                cursor: pointer; 
+               }
+            
+               .prayer_list_item{
+                list-style: none;
+                border:1px solid #e6e6e6;
+                padding: 4px;
+                margin: 4px 0;
+                border-radius: 5px;
+                display: flex;
+                justify-content: space-between;
+               }
+               .prayer_list_item:hover{
+                background-color: #EC5F5D;
+                color: white;
+                cursor: pointer;
+               }
+               .form{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                margin-bottom: 10px;
+
+
+               }
+               .form input, .form button{
+                width: 70%;
+                padding: 8px 0;
+                border:1px solid #e6e6e6;
+                border-radius: 5px;
+               }
+               .form input{
+                padding-left: 10px;
+               }
+               .form button{
+                        background-color: #EC5F5D;
+                        color: white;
+                }
+                .timezone{
+                       color: #EC5F5D;
+                }
+                .message{
+                        color:#a6a6a6;
+                }
+               
+                @media only screen and (max-width: 400px) {
+                        .container{ 
+                                width: 90%;
+                                /* background-image: url('./images/star.jpg'); */
+                }
+
+                }
+        </style>
+</head>
+<body>
+        <div id="app">
+                <div class="container">
+                        <h2 class="message">{{ message }}</h2>
+                        <p class="timezone">{{ timeZone }}</p>
+                        <div class="nav">
+                                <button @click="prevDayPrayer":disabled="prevButtonStop"><</button>
+                                <p>{{ day }},{{ date }}</p>
+                                <button @click="nextDayPrayer" :disabled="nextButtonStop">></button>
+                        </div>
+                        <div class="form">
+                                
+                                        <input type="text" id="country" placeholder="Your Country" v-model="yourCountry">          
+                                
+                                
+                                        <input type="text" id="city" placeholder="Your City" v-model="yourCity">
+                                
+                                
+                                        <button @click="yourCityPrayerTime">Your Prayer Time</button>
+                                
+                        </div>
+                        
+                        <div class="prayer_list">
+                                <div class="prayer_list_item"><span>Fajr</span><span>{{ Fajr }}</span></div>
+                                <div class="prayer_list_item"><span>Dhuhr</span><span>{{ Dhuhr }}</span></div>
+                                <div class="prayer_list_item"><span>Asr</span><span>{{ Asr }}</span></div>
+                                <div class="prayer_list_item"><span>Magrib</span><span>{{ Magrib }}</span></div>
+                                <div class="prayer_list_item"><span>Isha</span><span>{{ Isha }}</span></div>
+                        </div>
+                       
+                </div>
+             
+        </div>
+<script>
+  const { createApp } = Vue
+
+  createApp({
+   data(){
+        return{
+                message:'Solat Times',
+                country:'United Kingdom',
+                city:'London',
+                Fajr:'',
+                Dhuhr:'',
+                Asr:'',
+                Magrib:'',
+                Isha:'',
+                prayerDay:'',
+                nextButtonStop:false,
+                prevButtonStop:false,
+                date:'',
+                day:'',
+                yourCity:'',
+                yourCountry:'',
+                timeZone:''
+
+        }
+   },
+   created(){
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth() + 1
+        const currentYear = currentDate.getFullYear()
+        const currentDay = currentDate.getDate();
+        fetch(`http://api.aladhan.com/v1/calendarByCity/${currentYear}/${currentMonth}?city=${this.city}&country=${this.country}&method=2`)
+        .then(response => response.json())
+        .then(data => {
+                console.log(data.data[currentDay - 1])
+                this.timeZone = data.data[currentDay - 1].meta.timezone
+                this.date = data.data[currentDay - 1].date.gregorian.date
+                this.day = data.data[currentDay - 1].date.gregorian.weekday.en;
+                this.prayerDay = currentDay - 1
+                const prayerTime = data.data[currentDay - 1].timings
+                this.Fajr = prayerTime.Fajr;
+                this.Dhuhr = prayerTime.Dhuhr;
+                this.Asr = prayerTime.Asr;
+                this.Magrib = prayerTime.Maghrib;
+                this.Isha = prayerTime.Isha;
+        })
+
+   },
+   methods:{
+        yourCityPrayerTime(){
+                if(this.yourCity != '' && this.yourCountry != ''){
+                        const currentDate = new Date();
+                        const currentMonth = currentDate.getMonth() + 1
+                        const currentYear = currentDate.getFullYear()
+                        const currentDay = currentDate.getDate();
+                        fetch(`http://api.aladhan.com/v1/calendarByCity/${currentYear}/${currentMonth}?city=${this.yourCity}&country=${this.yourCountry}&method=2`)
+                        .then(response => response.json())
+                        .then(data => {
+                                console.log(data)
+                                this.timeZone = data.data[currentDay - 1].meta.timezone
+                                this.date = data.data[currentDay - 1].date.gregorian.date
+                                this.day = data.data[currentDay - 1].date.gregorian.weekday.en;
+                                this.prayerDay = currentDay - 1
+                                const prayerTime = data.data[currentDay - 1].timings
+                                this.Fajr = prayerTime.Fajr;
+                                this.Dhuhr = prayerTime.Dhuhr;
+                                this.Asr = prayerTime.Asr;
+                                this.Magrib = prayerTime.Maghrib;
+                                this.Isha = prayerTime.Isha;
+                        });
+                }
+                
+
+
+        },       
+        nextDayPrayer(){
+                this.prayerDay++
+                this. prevButtonStop = false;
+                if(this.prayerDay == 30){
+                        this.nextButtonStop = true;
+                }
+                if(this.yourCity != '' && this.yourCountry != ''){
+                        this.country = this.yourCountry
+                        this.city = this.yourCity
+                }
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth() + 1
+                const currentYear = currentDate.getFullYear()
+                const currentDay = currentDate.getDate();
+                fetch(`http://api.aladhan.com/v1/calendarByCity/${currentYear}/${currentMonth}?city=${this.city}&country=${this.country}&method=2`)
+                .then(response => response.json())
+                .then(data => {
+                        console.log(data.data[this.prayerDay])
+                        const prayerTime = data.data[this.prayerDay].timings
+                        this.day =  data.data[this.prayerDay].date.gregorian.weekday.en;
+                        this.date =  data.data[this.prayerDay].date.gregorian.date
+                        this.Fajr = prayerTime.Fajr;
+                        this.Dhuhr = prayerTime.Dhuhr;
+                        this.Asr = prayerTime.Asr;
+                        this.Magrib = prayerTime.Maghrib;
+                        this.Isha = prayerTime.Isha;
+                })
+        },
+        prevDayPrayer(){
+                this.prayerDay--
+                this.nextButtonStop = false;
+                if(this.prayerDay == 0){
+                        this.prevButtonStop = true;
+                       
+                }
+                if(this.yourCity != '' && this.yourCountry != ''){
+                        this.country = this.yourCountry
+                        this.city = this.yourCity
+                }
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth() + 1
+                const currentYear = currentDate.getFullYear()
+                const currentDay = currentDate.getDate();
+                fetch(`http://api.aladhan.com/v1/calendarByCity/${currentYear}/${currentMonth}?city=${this.city}&country=${this.country}&method=2`)
+                .then(response => response.json())
+                .then(data => {
+                        const prayerTime = data.data[this.prayerDay].timings
+                        this.day =  data.data[this.prayerDay].date.gregorian.weekday.en;
+                        this.date =  data.data[this.prayerDay].date.gregorian.date
+                        this.Fajr = prayerTime.Fajr;
+                        this.Dhuhr = prayerTime.Dhuhr;
+                        this.Asr = prayerTime.Asr;
+                        this.Magrib = prayerTime.Maghrib;
+                        this.Isha = prayerTime.Isha;
+                })
+
+        }
+   }
+  }).mount('#app')
+</script>
+</body>
+</html>
